@@ -1,12 +1,21 @@
-# Release Notes for v1.0.0
+# Quick Start Examples
 
-## Initial Stable Release
+## Example 1:
+```yaml
+steps:
+  - name: Example Step
+    uses: jasonxkensei/notarize-action@v1.0.0
+    with:
+      api_key: 'your_api_key_here'
+      author_name: 'your_author_name_here'
+```
 
-This release introduces the xProof Notarize GitHub Action, designed for notarizing build artifacts on the MultiversX blockchain.
-
-### Features:
-- Automated notarization of builds.
-- Easy integration with GitHub workflows.
-- Support for MultiversX blockchain protocols.
-
-We hope this action enhances your development experience!
+## Example 2:
+```yaml
+steps:
+  - name: Another Example Step
+    uses: jasonxkensei/notarize-action@v1.0.0
+    with:
+      api_key: 'another_api_key'
+      author_name: 'another_author_name'
+```
