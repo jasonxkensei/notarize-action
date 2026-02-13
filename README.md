@@ -1,45 +1,65 @@
-# notarize-action
+# xProof Notarize — GitHub Action
 
-xProof Notarize — GitHub Action
-Notarize build artifacts on MultiversX blockchain. Creates immutable, verifiable proof-of-existence for any file.
+Programmable software artifact notarization. Hash locally, anchor on MultiversX blockchain, verify forever. Supply chain attestation for your CI/CD pipeline.
 
-Quick Start
+## Quick Start
+
+```yaml
 name: Notarize Release
 on:
   push:
     branches: [main]
+
 jobs:
   notarize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Build
         run: npm run build && zip -r build.zip dist/
+
       - name: Notarize with xProof
         uses: xproof-app/notarize-action@v1
         with:
           api_key: ${{ secrets.XPROOF_API_KEY }}
           files: 'build.zip'
-Inputs
-Input	Required	Default	Description
-api_key	Yes	—	xProof API key (pm_xxx). Store as GitHub secret.
-files	Yes	—	Files or glob patterns to notarize (space-separated).
-author_name	No	''	Author name to attach to certification.
-api_url	No	https://xproof.app	API URL (override for testing).
-Outputs
-Output	Description
-proof_ids	Comma-separated proof IDs
-proof_urls	Comma-separated verification URLs
-badge_urls	Comma-separated badge SVG URLs
-summary	Human-readable summary
-Examples
-Notarize a single file
+```
+
+## Inputs
+
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `api_key` | Yes | — | xProof API key (`pm_xxx`). Store as GitHub secret. |
+| `files` | Yes | — | Files or glob patterns to notarize (space-separated). |
+| `author_name` | No | `''` | Author name to attach to certification. |
+| `api_url` | No | `https://xproof.app` | API URL (override for testing). |
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `proof_ids` | Comma-separated proof IDs |
+| `proof_urls` | Comma-separated verification URLs |
+| `badge_urls` | Comma-separated badge SVG URLs |
+| `proof_json` | Path to JSON attestation file — attach to GitHub Releases for provenance |
+| `summary` | Human-readable summary |
+
+## Examples
+
+### Notarize a single file
+
+```yaml
 - name: Notarize
   uses: xproof-app/notarize-action@v1
   with:
     api_key: ${{ secrets.XPROOF_API_KEY }}
     files: 'release.tar.gz'
-Notarize multiple files
+```
+
+### Notarize multiple files
+
+```yaml
 - name: Notarize
   id: notarize
   uses: xproof-app/notarize-action@v1
@@ -47,20 +67,71 @@ Notarize multiple files
     api_key: ${{ secrets.XPROOF_API_KEY }}
     files: 'build.zip package.json contracts/main.sol'
     author_name: 'CI Bot'
+
 - name: Show results
   run: echo "Proofs: ${{ steps.notarize.outputs.proof_urls }}"
-Add badge to README
-After notarizing, add a verification badge to your README:
+```
 
+### Attach attestation to GitHub Release
+
+```yaml
+- name: Notarize
+  id: notarize
+  uses: xproof-app/notarize-action@v1
+  with:
+    api_key: ${{ secrets.XPROOF_API_KEY }}
+    files: 'build.zip'
+
+- name: Upload attestation to Release
+  uses: softprops/action-gh-release@v2
+  with:
+    files: ${{ steps.notarize.outputs.proof_json }}
+```
+
+The attestation JSON contains full provenance data:
+
+```json
+{
+  "xproof_attestation": "1.0",
+  "timestamp": "2026-02-12T10:30:00Z",
+  "blockchain": "MultiversX",
+  "source": {
+    "repository": "owner/repo",
+    "commit": "abc1234...",
+    "ref": "refs/heads/main",
+    "run_id": "123456789"
+  },
+  "artifacts": [
+    {
+      "filename": "build.zip",
+      "sha256": "a1b2c3d4...",
+      "proof_id": "uuid-here",
+      "verify_url": "https://xproof.app/proof/uuid-here",
+      "badge_url": "https://xproof.app/badge/uuid-here",
+      "tx_hash": "abc123...",
+      "explorer_url": "https://explorer.multiversx.com/transactions/abc123..."
+    }
+  ]
+}
+```
+
+### Add badge to README
+
+```markdown
 [![xProof Verified](https://xproof.app/badge/{proof_id})](https://explorer.multiversx.com/transactions/{tx_hash})
-How it works
-Calculates SHA-256 hash of each file locally (files never leave your runner)
-Sends only the hash + filename to xProof API
-xProof anchors the hash on MultiversX blockchain
-Returns verification URL and badge
-Cost: $0.05 per certification, paid in EGLD.
+```
 
-Get an API key: Visit xproof.app and connect your wallet.
+## How it works
 
-License
-All Rights Reserved. See xproof.app for terms.
+1. Calculates SHA-256 hash of each file locally (files never leave your runner)
+2. Sends only the hash + filename to xProof API
+3. xProof anchors the hash on MultiversX blockchain
+4. Returns verification URLs, badges, and a JSON attestation file
+
+**Cost:** $0.05 per certification, paid in EGLD.
+
+**Get an API key:** Visit [xproof.app](https://xproof.app) and connect your wallet.
+
+## License
+
+All Rights Reserved. See [xproof.app](https://xproof.app) for terms.
